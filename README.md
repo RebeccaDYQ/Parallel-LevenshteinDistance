@@ -1,6 +1,6 @@
 # 15618-project
 
-## running sequential C version : simple.c
+## sequential C version : simple.c
 gcc simple.c -o simple
 ./simple
 
@@ -26,3 +26,13 @@ g++ -m64 -Iobjs/ -O3 -Wall -o LD objs/main.o objs/LD_ispc.o -lm
 
 Todos:
 - Dynamic tasks.
+
+## OpenMP Implementation
+### Row Order
+compile commands:  
+make  
+./distance-omp  
+
+Current performance: Achieve some speedup if the table has large #col and small #row. Bottleneck of performance is the # synchronization (barrier)  
+Todos:  
+blocking -> to eliminate barrier  
