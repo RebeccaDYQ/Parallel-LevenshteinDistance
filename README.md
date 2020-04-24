@@ -41,6 +41,6 @@ compile commands:
 make  
 ./distance-omp  
 
-Current performance: Achieve some speedup if the table has large #col and small #row. Bottleneck of performance is the # synchronization (barrier)  
-Todos:  
-blocking -> to eliminate barrier  
+Current performance: Achieve some speedup if the table has large #col and small #row.  
+TODO:  
+boost the performance of diagonal-major openmp
