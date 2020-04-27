@@ -28,7 +28,7 @@ int LevenshteinDistance(char* str1, char* str2, int len1, int len2, int ** D) {
 	return D[len1-1][len2-1];
 }
 
-
+/*
 int main()
 {
 	char str1[] = "hello";
@@ -48,3 +48,4 @@ int main()
 	printf("\nLD: %i\n\n", ld);
 	return 0;
 }
+*/

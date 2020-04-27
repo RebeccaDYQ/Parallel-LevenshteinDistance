@@ -32,8 +32,8 @@ namespace ispc { /* namespace */
 #if defined(__cplusplus) && (! defined(__ISPC_NO_EXTERN_C) || !__ISPC_NO_EXTERN_C )
 extern "C" {
 #endif // __cplusplus
+    extern void LD_diag_ispc(int32_t len1, int32_t len2, int32_t diag_start, int32_t start, int32_t end, int32_t str1_start, int32_t str2_start, int32_t * str_sub, int32_t left, int32_t top_left, int32_t * D);
     extern void LD_ispc(int32_t * str1, int32_t * str2, int32_t start_i, int32_t start_j, int32_t diag_len, int32_t D[][1000]);
-    extern void LD_ispc_unroll(int32_t * str1, int32_t * str2, int32_t start_i1, int32_t start_j1, int32_t start_i2, int32_t start_j2, int32_t diag_len1, int32_t diag_len2, int32_t D[][1000]);
     extern void LD_ispc_withtasks(int32_t * str1, int32_t * str2, int32_t start_i, int32_t start_j, int32_t diag_len, int32_t D[][1000]);
 #if defined(__cplusplus) && (! defined(__ISPC_NO_EXTERN_C) || !__ISPC_NO_EXTERN_C )
 } /* end extern C */
