@@ -18,21 +18,18 @@ export void LD_ispc(uniform int str1[], uniform int str2[],
 
 // prev1: start index of previous diagonal
 export void LD_diag_ispc( // uniform int str1[], uniform int str2[],
-                         uniform int len1, uniform int len2,
                          uniform int diag_start, uniform int start, uniform int end,
-                         uniform int str1_start, uniform int str2_start, uniform int str_sub[],
+                         // uniform int str1_start, uniform int str2_start, uniform int str_sub[],
                          uniform int left, uniform int top_left,
                          uniform int D[])
 {
-    // bool equal = equal[(str1_start-start)*(len2-1)+str2_start+start];
-    // print ("Equal % \n", equal_idx);
     foreach(k = start ... end) { 
         // int str1_idx = str1_start-k;
         // int str2_idx = str2_start+k;
         // if (str1[str1_idx] == str2[str2_idx])
-        int add_one = str_sub[(str1_start-k)*(len2-1)+str2_start+k];
+        // int add_one = str_sub[(str1_start-k)*(len2-1)+str2_start+k];
         // print ("k = %, equal %, add %\n", k, is_equal, add_one);
-        D[diag_start+k] = min(min(D[left+k]+1, D[left+k+1]+1), D[top_left+k] + add_one);
+        D[diag_start+k] = min(min(D[left+k]+1, D[left+k+1]+1), D[top_left+k]);
     }
 }
 /*

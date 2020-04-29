@@ -48,8 +48,8 @@ int LD_int_seq(int str1[], int str2[], int len1, int len2, int **D) {
 
 int main()
 {
-    static const int strlength1 = 10000;
-    static const int strlength2 = 100;
+    static const int strlength1 = 1000;
+    static const int strlength2 = 1000;
 
     char* str1 = (char *)calloc(strlength1, sizeof(char));
     char* str2 = (char *)calloc(strlength2, sizeof(char));
@@ -107,16 +107,15 @@ int main()
         }
         ld = D[len1-1][len2-1];
         */
+        
         // Store in diagonal major
-        
         static int D[len1*len2];
-        static int str_sub[(len1-1)*(len2-1)];
-        
+        // static int str_sub[(len1-1)*(len2-1)];
         // Precompute all diagonal lengths and start points
         int *diag_lens = (int *)calloc(len1+len2-1, sizeof(int));
         int *diag_starts = (int *)calloc(len1+len2-1, sizeof(int));
         diag_starts[0] = 0;
-        int diag_len;
+        int diag_len, diag_start, start, end, prev1, prev2, str1_start, str2_start, left, top_left;
         for (i = 0; i < len1+len2-1; i++) {
             int diag_pos = i+1-len1;
             diag_len = min(shorter, len1+diag_pos);
@@ -134,7 +133,20 @@ int main()
                 D[diag_starts[i+1]-1] = i;
         }
         // display_diag_table(D, diag_starts, diag_lens, len1, len2);
-        // Initialize substitution table
+        // Initialize substitution values
+        for (i = 2; i < len1+len2-1; i++) {
+            diag_len = diag_lens[i];
+            diag_start = diag_starts[i];
+            start = i < len1? 1: 0;
+            end = i < len2? diag_len-1: diag_len;
+            str1_start = min(i, len1-1)-1;
+            str2_start = max(0, i-len1+1)-1;
+            for (int k = start; k < end; k++) {
+                if (int_str1[str1_start-k] != int_str2[str2_start+k])
+                    D[diag_start+k] = 1;
+            }
+        }
+        /*
         for (i = 0; i < len1-1; i++) {
             for (j = 0; j < len2-1; j++) {
                 if (int_str1[i] != int_str2[j])
@@ -143,8 +155,7 @@ int main()
             }
             // printf("\n");
         }
-    
-        int diag_start, start, end, prev1, prev2, str1_start, str2_start, left, top_left;
+        */
 
         // Loop over diagnoals: exclude top left and bottom right corners 
         for (i = 2; i < len1+len2-1; i++) {
@@ -159,10 +170,10 @@ int main()
             end = i < len2? diag_len-1: diag_len;
             left = i < len1? prev1-1: prev1;
             top_left = i-1 < len1? prev2-start: prev2+1;
-            str1_start = min(i, len1-1)-1;
-            str2_start = max(0, i-len1+1)-1;
+            // str1_start = min(i, len1-1)-1;
+            // str2_start = max(0, i-len1+1)-1;
             // printf("Left %d top left %d str1 %d str2 %d\n", left, top_left, str1_start, str2_start);
-            ispc::LD_diag_ispc(len1, len2, diag_start, start, end, str1_start, str2_start, str_sub, left, top_left, D);
+            ispc::LD_diag_ispc(diag_start, start, end, left, top_left, D);
             // display_diag_table(D, diag_starts, diag_lens, len1, len2);
         }
         ld = D[len1*len2-1];
