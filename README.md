@@ -16,12 +16,19 @@ gcc simple.c -o simple
 
 - As required, DP table is uniform across all instances, and it cannot be a varying pointer. Instead, use a [MAXLEN][MAXLEN] 2D int array.
 
-#### Compile commands: (Generated files are in objs/. Add ispc path in ~/.bashrc.)
-ispc -O2 --target=avx LD_ispc.c -o objs/LD_ispc.o -h objs/LD_ispc.h
+Update: 
+- Store DP table in diagonal order, and unrolled to 1-D array. This change requires complicated index calculation and precomputation of diagonal lengths and start points.
+
+- First initialize the table in parallel (does not make much difference). Then precompute comparison results and fill in DP table in parallel (makes a big difference!). 
+
+#### Compile commands: (Generated files are in objs/. Add ispc path in ~/.bashrc. Support tasking model.)
+Update: Add a compiler option to disable gather coalescing (which will cause segmentation fault).
+
+ispc -O2 --target=avx LD_ispc.c -o objs/LD_ispc.o -h objs/LD_ispc.h --opt=disable-coalescing
 
 g++ -m64 main.c -Iobjs/ -O3 -Wall -c -o objs/main.o
 
-g++ -m64 -Iobjs/ -O3 -Wall -o LD objs/main.o objs/LD_ispc.o -lm
+g++ -m64 -Iobjs/ -O3 -Wall -o LD objs/main.o objs/LD_ispc.o ob  objs/tasksys.o ../sequential/LD_seq.o -lm -lpthread
 
 ### ISPC task
 Arbitrarily set a `BLOCK_LEN`. Each task is responsible for computing `BLOCK_LEN` entries.
