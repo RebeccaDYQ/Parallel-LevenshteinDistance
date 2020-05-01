@@ -5,6 +5,7 @@
 #include "../sequential/LD_seq.h"
 
 #define TRIALS 100
+#define idx(i, j, len2) (i*len2+j)
 
 inline int min ( int a, int b ) { return a < b ? a : b; }
 inline int max ( int a, int b ) { return a > b ? a : b; }
@@ -70,8 +71,8 @@ int main()
     // printf("str1: %s, str2: %s\n", str1, str2);
     
     // Convert string to int array
-    static int int_str1[strlength1];
-    static int int_str2[strlength2];
+    int int_str1[strlength1];
+    int int_str2[strlength2];
     for (i = 0; i < strlength1-1; i++) {
         int_str1[i] = str1[i] - 'a';
     }
@@ -82,18 +83,22 @@ int main()
     // ISPC time
     double seq_time = 0.0, ispc_time = 0.0;
 
-    int shorter = min(len1, len2);
     int ld, seq_ld;
     // Track ispc time
     clock_t t = clock(); 
     for (int n = 0; n < TRIALS; n++) {
-        /*
-        static int D[len1][len2];
+        /* Row-major
+        int D[len1*len2] = {0};
+        // Initialize D table
         for (i = 0; i < len1; i++)
-            D[i][0] = i;
-        for (i = 0; i < len2; i++)
-            D[0][i] = i;
-        // Loop over diagnoals  
+            D[idx(i, 0, len2)] = i;
+        ispc::LD_row_init(len2, D);
+        ispc::LD_row_compare(int_str1, int_str2, len1, len2, D);
+        ispc::LD_row_ispc(len1, len2, D);
+        ld = D[len1*len2-1]; 
+        */
+
+        /* Loop over diagnoals  
         int diag_idx, diag_len, start_i, start_j;
         for (diag_idx = 3-len1; diag_idx < len2; diag_idx ++) {
             diag_len = min(shorter, len1+diag_idx);
@@ -107,15 +112,19 @@ int main()
         }
         ld = D[len1-1][len2-1];
         */
-        
+       
         // Store in diagonal major
-        static int D[len1*len2];
-        // static int str_sub[(len1-1)*(len2-1)];
+        int D[len1*len2] = {0};
+        int shorter = min(len1, len2);
         // Precompute all diagonal lengths and start points
-        int *diag_lens = (int *)calloc(len1+len2-1, sizeof(int));
-        int *diag_starts = (int *)calloc(len1+len2-1, sizeof(int));
+        // int *diag_lens = (int *)calloc(len1+len2-1, sizeof(int));
+        // int *diag_starts = (int *)calloc(len1+len2-1, sizeof(int));
+        int diag_lens[len1+len2-1];
+        int diag_starts[len1+len2-1];
         diag_starts[0] = 0;
-        int diag_len, diag_start, start, end, prev1, prev2, str1_start, str2_start, left, top_left;
+        int diag_len, diag_start, start, end, prev1, prev2, left, top_left;
+        // int str1_start, str2_start;
+
         for (i = 0; i < len1+len2-1; i++) {
             int diag_pos = i+1-len1;
             diag_len = min(shorter, len1+diag_pos);
@@ -126,59 +135,37 @@ int main()
         }
         
         // Initialize table
+        /*
         for (i = 0; i < len1+len2-1; i++) {
             if (i <= len1-1)
                 D[diag_starts[i]] = i;
             if (i < len2)
                 D[diag_starts[i+1]-1] = i;
         }
-        // display_diag_table(D, diag_starts, diag_lens, len1, len2);
-        // Initialize substitution values
-        for (i = 2; i < len1+len2-1; i++) {
-            diag_len = diag_lens[i];
-            diag_start = diag_starts[i];
-            start = i < len1? 1: 0;
-            end = i < len2? diag_len-1: diag_len;
-            str1_start = min(i, len1-1)-1;
-            str2_start = max(0, i-len1+1)-1;
-            for (int k = start; k < end; k++) {
-                if (int_str1[str1_start-k] != int_str2[str2_start+k])
-                    D[diag_start+k] = 1;
-            }
-        }
-        /*
-        for (i = 0; i < len1-1; i++) {
-            for (j = 0; j < len2-1; j++) {
-                if (int_str1[i] != int_str2[j])
-                    str_sub[i*(len2-1)+j] = 1;
-                // printf("[%d][%d] %d", i, j, str_sub[i*(len2-1)+j]);
-            }
-            // printf("\n");
-        }
         */
-
+        ispc::LD_diag_init(len1, len2, shorter, diag_starts, D);
+        ispc::LD_diag_compare(int_str1, int_str2, len1, len2, shorter, diag_starts, diag_lens, D);
+        
         // Loop over diagnoals: exclude top left and bottom right corners 
         for (i = 2; i < len1+len2-1; i++) {
-            
             diag_len = diag_lens[i];
             diag_start = diag_starts[i];
             prev1 = diag_starts[i-1];
             prev2 = diag_starts[i-2];
-            // printf("Diag %d len %d start %d\n", i, diag_len, diag_start);
-        
             start = i < len1? 1: 0;
             end = i < len2? diag_len-1: diag_len;
-            left = i < len1? prev1-1: prev1;
-            top_left = i-1 < len1? prev2-start: prev2+1;
+            
             // str1_start = min(i, len1-1)-1;
             // str2_start = max(0, i-len1+1)-1;
-            // printf("Left %d top left %d str1 %d str2 %d\n", left, top_left, str1_start, str2_start);
+            // ispc::LD_each_diag_compare(int_str1, int_str2, diag_start, start, end, str1_start, str2_start, D);
+            
+            left = i < len1? prev1-1: prev1;
+            top_left = i-1 < len1? prev2-start: prev2+1;
             ispc::LD_diag_ispc(diag_start, start, end, left, top_left, D);
-            // display_diag_table(D, diag_starts, diag_lens, len1, len2);
         }
         ld = D[len1*len2-1];
-        free(diag_lens);
-        free(diag_starts);
+        // free(diag_lens);
+        // free(diag_starts);       
     }
     ispc_time = clock() - t;
     // Compare with sequential version
@@ -190,7 +177,6 @@ int main()
         }
     
         seq_ld = LevenshteinDistance(str1, str2, len1, len2, seq_D);
-        // seq_ld = LD_int_seq(int_str1, int_str2, len1, len2, seq_D);
         
         for (j = 0; j < len1; j++) {
             free(seq_D[j]);
@@ -198,7 +184,6 @@ int main()
         free(seq_D);
     }
     seq_time = clock() - st;
-    // display_table(seq_D, len1, len2);
     
     printf("\nLD: %i, seq_LD: %i \n\n", ld, seq_ld); 
     printf("ISPC time took: %f s\n", ispc_time/CLOCKS_PER_SEC);
