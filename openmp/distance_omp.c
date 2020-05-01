@@ -74,17 +74,14 @@ void diagonal_LD_element(char* str1, char* str2, int** D, int i, int j) {
 int diagonal_LD(char* str1, char* str2, int len1, int len2, int ** D) {
 	int i;
 
-	#pragma omp parallel for
+	#pragma omp parallel for 
 	for (i = 0; i < len1; i++) {
-		int j;
-		for(j = 0; j < len2; j++) {
-			if (i==0) 
-				D[i][j] = j;
-			else if (j==0) 
-				D[i][j] = i;
-			else if (str1[i-1] != str2[j-1])
-				D[i][j] = 1;
-		}
+		D[i][0] = i;
+	}
+
+	#pragma omp parallel for
+	for (i = 0; i < len2; i++) {
+		D[0][i] = i;
 	}
 
 	int diag_idx;
@@ -97,8 +94,7 @@ int diagonal_LD(char* str1, char* str2, int len1, int len2, int ** D) {
 			for (i = 0; i<sequential_threshold; i++) {
 				int j;
 				for (j=0; j<sequential_threshold-i; j++) {
-					// diagonal_LD_element(str1, str2, D, i, j);
-					D[i+1][j+1] = min(min(D[i][j+1], D[i+1][j])+1, D[i][j] + D[i+1][j+1]);
+					diagonal_LD_element(str1, str2, D, i, j);
 				}
 			}
 			diag_idx = sequential_threshold - 1;
@@ -106,29 +102,38 @@ int diagonal_LD(char* str1, char* str2, int len1, int len2, int ** D) {
         	#pragma omp parallel for
 	        for (i=0; i<diag_idx + 1; i++) {
 	        	int j = diag_idx - i;
-	        	// diagonal_LD_element(str1, str2, D, i, j);
-	        	D[i+1][j+1] = min(min(D[i][j+1], D[i+1][j])+1, D[i][j] + D[i+1][j+1]);
+	        	diagonal_LD_element(str1, str2, D, i, j);
 		    }
         } else if (diag_idx < len2) {
         	#pragma omp parallel for
         	for(i=0; i<len1; i++) {
         		int j = diag_idx - i;
-        		// diagonal_LD_element(str1, str2, D, i, j);
-        		D[i+1][j+1] = min(min(D[i][j+1], D[i+1][j])+1, D[i][j] + D[i+1][j+1]);
+        		diagonal_LD_element(str1, str2, D, i, j);
         	}
-        } else {
+        } else if (diag_idx < len1 + len2 - sequential_threshold){
         	#pragma omp parallel for
         	for(i=diag_idx+1-len2; i<len1; i++) {
         		int j = diag_idx - i;
-        		// diagonal_LD_element(str1, str2, D, i, j);
-        		D[i+1][j+1] = min(min(D[i][j+1], D[i+1][j])+1, D[i][j] + D[i+1][j+1]);
+        		diagonal_LD_element(str1, str2, D, i, j);
         	}
+        } else {
+        	for (i = len1 - sequential_threshold; i<len1; i++) {
+				int j;
+				for (j=len2 - (i - len1 + sequential_threshold); j<len2; j++) {
+					diagonal_LD_element(str1, str2, D, i, j);
+				}
+			}
+			diag_idx = len1 + len2;
         }
     }
 
     return D[len1][len2];
 }
 
+// int diagonal_mem_LD(char* str1, char* str2, int len1, int len2, int *D) {
+// 	// D is of size len1*len2
+	
+// }
 
 int seq_LevenshteinDistance(char* str1, char* str2, int len1, int len2, int ** D) {
 	int i, j;
@@ -158,8 +163,8 @@ int main()
 	// initialize the 2 strings
 	int trial_num = 100;
 	int trial_i = 0; 
-	int strlength1 = 1000;
-	int strlength2 = 1000;
+	int strlength1 = 100;
+	int strlength2 = 10000;
 	char* str1 = malloc(strlength1 * sizeof(char));
 	char* str2 = malloc(strlength2 * sizeof(char));
 	int i;
