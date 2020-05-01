@@ -21,7 +21,7 @@ Update:
 
 - First initialize the table in parallel (does not make much difference). Then precompute comparison results and fill in DP table in parallel (makes a big difference!). 
 
-#### Compile commands: (Generated files are in objs/. Add ispc path in ~/.bashrc. Support tasking model.)
+#### Compile commands: (Generated files are in objs/. Add ispc path in ~/.bashrc. Also support tasking model.)
 Update: Add a compiler option to disable gather coalescing (which will cause segmentation fault).
 
 ispc -O2 --target=avx LD_ispc.c -o objs/LD_ispc.o -h objs/LD_ispc.h --opt=disable-coalescing
@@ -30,17 +30,13 @@ g++ -m64 main.c -Iobjs/ -O3 -Wall -c -o objs/main.o
 
 g++ -m64 -Iobjs/ -O3 -Wall -o LD objs/main.o objs/LD_ispc.o ob  objs/tasksys.o ../sequential/LD_seq.o -lm -lpthread
 
+### Row Order
+Process 8 rows (or fewer at the end) at a time. Start with a diagonal line of length 8 or shorter, and move it horizontally to the end. Compute the entries on the diagonal using an ISPC kernel. 
+
+Problems: Non-sequential memory accesses; not fully using 8 ISPC units at the start and end positions.
+
 ### ISPC task
 Arbitrarily set a `BLOCK_LEN`. Each task is responsible for computing `BLOCK_LEN` entries.
-
-#### Compile commands: (tasksys.cpp in the same folder)
-ispc -O2 --target=avx LD_ispc.c -o objs/LD_ispc.o -h objs/LD_ispc.h
-
-g++ -m64 main.c -Iobjs/ -O3 -Wall -c -o objs/main.o
-
-g++ -m64 tasksys.cpp -Iobjs/ -O3 -Wall -c -o objs/tasksys.o
- 
-g++ -m64 -Iobjs/ -O3 -Wall -o LD objs/main.o objs/LD_ispc.o objs/tasksys.o -lm -lpthread 
 
 ## OpenMP Implementation
 ### Row Order
