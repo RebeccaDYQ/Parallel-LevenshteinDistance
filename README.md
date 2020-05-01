@@ -42,5 +42,10 @@ make
 ./distance-omp  
 
 Current performance: Achieve some speedup if the table has large #col and small #row.  
-TODO:  
-boost the performance of diagonal-major openmp
+
+## MPI Implementation
+### Row Order  
+compile commands:
+make  
+mpirun -np 8 distance-mpi  
+
